@@ -20,7 +20,7 @@ function page() {
                     <button onClick={handleLogout}>logout</button>
                 </div>
 
-        <Link href="/event">
+        <Link href="/">
             <button className="p-3 bg-[#C9A96E] text-black rounded hover:opacity-80">
             👀 กลับไปดูหน้าเว็บหลัก (หน้าซ่อน)
             </button>
