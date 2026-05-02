@@ -38,7 +38,7 @@ export default function page() {
       
   return (
     <>
-    <form onSubmit={handleSubmit} className="flex bg-[rgba(0,0,0,0.92)] w-lvw z-50 fixed items-center p-24 justify-center inset-0" id="adminOverlay">
+    <form onSubmit={handleSubmit} className="flex bg-[rgba(0,0,0,0.92)] w-lvw z-50 fixed items-center p-6 justify-center inset-0">
         <div className={`relative overflow-hidden w-full max-w-[320px] rounded-[20px] 
             bg-linear-to-b from-[#130f06] to-[#0a0805] 
             border border-[#C9A96E]/20 py-8 px-7 text-center 
@@ -89,7 +89,7 @@ export default function page() {
                     เข้าสู่ระบบ
                 </button>
                 <Link href="/">
-                    <button type="submit" className="
+                    <button className="
                         w-full p-3 rounded-sm bg-transparent
                         border border-white/5 text-[#444444]
                         font-serif text-[0.85rem] cursor-pointer
