@@ -43,7 +43,7 @@ export default function RewardModal({ isOpen, onClose, userId, scanned = [], tot
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex items-end justify-center bg-black/70"
+      className="fixed inset-0 z-999 flex items-end justify-center bg-black/70"
       onClick={onClose}
     >
       <div
