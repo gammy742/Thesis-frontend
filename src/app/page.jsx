@@ -167,7 +167,7 @@ export default function Home() {
                   />
                   {/* Lock (ยังไม่ได้ scan) */}
                   {!done && (
-                    <div className="absolute inset-0 z-[4] flex flex-col items-center justify-center gap-1.5">
+                    <div className="absolute inset-0 z-4 flex flex-col items-center justify-center gap-1.5">
                       <div
                         className="w-11 h-11 rounded-full flex items-center justify-center"
                         style={{
@@ -257,7 +257,7 @@ export default function Home() {
             🎉 ครบทุกบูธแล้ว!
           </div>
         )}
-      </JoinEvent>
+
 
  {/* ── Modal ── */}
  {selectedBooth && (
@@ -351,6 +351,8 @@ export default function Home() {
         scanned={scanned}
         total={booths.length}
       />
+      </JoinEvent>
+
     </div>
     
     </>
