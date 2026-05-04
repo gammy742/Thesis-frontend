@@ -1,111 +1,273 @@
 "use client";
 
-import React from "react";
-import { useState,useEffect } from "react";
-import Image from "next/image";
-import Link from "next/link";
+import React, { useState, useEffect } from "react";
 import Cosciworklogo from "@/components/cosciworklogo";
+import JoinEvent from "@/components/joinevent";
+import Countingscan from "@/components/countingscan";
+import ScanQRCode from "@/components/scanqrcode";
+import RewardModal from "@/components/rewardmodal";
 import MuseumBackground from "@/components/museumbg";
-import Countdown from "@/components/countdown";
 
 export default function Home() {
-  const [booths, setBooths] = useState([]); 
+  const [booths, setBooths] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [scanned, setScanned] = useState([1, 3]);
+  const [scanned, setScanned] = useState([]);
+  const [error, setError] = useState("");
+  const [user, setUser] = useState(null); // ✅ แก้ตรงนี้
 
+  const [selectedBooth, setSelectedBooth] = useState(null);
+  const [showReward, setShowReward] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // โหลด user จาก localStorage
   useEffect(()=>{
-    const fetchData=async()=>{
-      try{
-        const response =await fetch(`${process.env.NEXT_PUBLIC_API_URL}/booths`)
-        const data = await response.json()
+    const savedUserId=localStorage.getItem("user_id");
+    const saved=JSON.parse(localStorage.getItem("scanned_booths"))
+    const adminLogged = localStorage.getItem("admin_logged_in") === "true";
 
-        if(data.status ==="success"){
-          setBooths(data.data)
-          console.log(data)
-        }else{
-            setStatus(result.message)
-        }
-
-      }catch(error){
-          console.error("Error fetching countdown API:", error);
-          setError("ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้");
-      }finally{
-        setIsLoading(false);// ปิดสถานะโหลดข้อมูล
-      }
-    }
-    fetchData();
-
+    if(savedUserId) setUser({id:Number(savedUserId)});
+    setScanned(saved ?? []);
+    setIsAdmin(adminLogged);
   },[])
+
+  useEffect(() => {
+    localStorage.setItem("scanned_booths", JSON.stringify(scanned));
+  }, [scanned]);
+
+  // ✅ โหลด booths
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/booths`
+        );
+        const data = await res.json();
+
+        if (data.status === "success") {
+          setBooths(data.data);
+        } else {
+          setError(data.message);
+        }
+      } catch (err) {
+        console.error(err);
+        setError("เชื่อม server ไม่ได้");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  //Sync DB
+  useEffect(() => {
+    if (!user) return;
   
+    const fetchProgress = async () => {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/progress/${user.id}`
+        );
+        const data = await res.json();
+
+        const dbScanned=data.scanned??[];
+  
+        if (data.scanned) {
+          const local=JSON.parse(localStorage.getItem("scanned_booths"));
+          const merge=[...new Set([...local,...dbScanned])]
+          setScanned(merge);
+          localStorage.setItem("scanned_booths", JSON.stringify(merge));
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+  
+    fetchProgress();
+  }, [user]);
+
+  const allDone = booths.length > 0 && booths.every(b =>
+    b.boothnum && (scanned ?? []).map(String).includes(String(b.boothnum))
+  );
+
+  useEffect(() => {
+    if (allDone) setShowReward(true);
+  }, [allDone]);
+
   if (isLoading) {
-    return <div className="text-center p-4">กำลังโหลดข้อมูล...</div>;
+    return <div className="text-center p-4">กำลังโหลด...</div>;
   }
-  const allDone = scanned.length >= 10;
+
   return (
     <>
-      <Cosciworklogo/>
+    <MuseumBackground/>
+    <div className="flex flex-col min-h-screen">
+      <JoinEvent
+        onJoinSuccess={(data) => {
+          // ✅ แก้ตรงนี้
+          setUser({ id: data.user_id });
+          localStorage.setItem("user_id", data.user_id);
+        }}
+      >
+        <Cosciworklogo />
+        <div className="flex justify-center px-5">
+          <Countingscan count={scanned.length} />
+        </div>
 
-      {/*Boothcard Section*/}
-      <div className="section-title"><span>The Gallery</span></div>
-      <div className="grid grid-cols-2 gap-4 p-4">
-        {booths.map((b,i)=>{
-          const done=scanned.includes(b.id)
+        <div className="section-title">
+          <span>The Gallery</span>
+        </div>
+        
+        <div className="flex justify-center px-5">
+          <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
+            {booths.map((b, i) => {
+              const done = b.boothnum && scanned.map(String).includes(String(b.boothnum));
 
-          return(
-            <div key={b.id ||i} className="relative overflow-hidden h-56 rounded-sm border border-[#c9a96e]/20">
-              {/*image bg */}
-              {b.url ?(
-                <img src={b.url} alt={b.boothname}  className={`absolute inset-0 w-full h-full object-cover transition-[filter,transform] duration-700 ease-in-out
-                  ${done ? 'scale-100 grayscale-0' : 'scale-105 grayscale blur-sm brightness-60'}`}/>
-                ):(
-                  <div className="absolute inset-0 bg-[#1a1408] z-0" />
-                )
-              }
+              return (
+                <div
+                  key={b.id||i}
+                  className="rounded overflow-hidden relative aspect-3/4 transition duration-400 cursor-default"
 
-              {/* Overlay ตอน lock */}
-              {!done && (
-                <div className="absolute inset-0 z-10 bg-black/60 backdrop-blur-[2px]" />
-              )}
+                  onClick={()=>done&&setSelectedBooth(b)}
+                >
+                  {/* image */}
+                  {b.url ? (
+                    <img
+                      src={b.url}
+                      alt={b.boothname}
+                      loading="lazy" 
+                      className={`absolute w-full h-full object-cover transition ${
+                        done
+                          ? "grayscale-0"
+                          : "grayscale blur-sm brightness-50"
+                      }`}
+                    />
+                  ) : (
+                    <div className="bg-black w-full h-full" />
+                  )}
 
-              {/* ไอคอนล็อค */}
-              {!done && (
-                <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-1">
-                  <div className="w-10 h-10 rounded-full bg-black/40 border border-[#c9a96e]/20 flex items-center justify-center text-xl">
-                    🔒
+                  {/* lock */}
+                  {!done && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/60">
+                      🔒
+                    </div>
+                  )}
+
+                  {/* done */}
+                  {done && (
+                    <div className="absolute top-2 right-2 text-green-400 text-xl">
+                      ✓
+                    </div>
+                  )}
+
+                  {/* ← เพิ่ม hint ให้กดได้ */}
+                  {done && (
+                    <div className="absolute top-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                      👥 ดูสมาชิก
+                    </div>
+                  )}
+
+                  {/* text */}
+                  <div className="absolute bottom-0 bg-black/60 w-full p-2 text-white">
+                    <p>{b.boothname}</p>
+                    <p className="text-xs">
+                      {done ? "เยี่ยมชมแล้ว" : "ยังไม่ได้เยี่ยมชม"}
+                    </p>
                   </div>
-                  <span className="text-[#c9a96e]/50 text-xs font-serif">No.{String(i+1).padStart(2,'0')}</span>
                 </div>
-              )}
+              );
+            })}
+          </div>
+        </div>
 
-              {/* ✓ ตอน done */}
-              {done && (
-                <div className="absolute top-2 right-2 z-20 text-green-400 text-2xl font-bold">✓</div>
-              )}
+        {allDone && (
+          <div className="text-center text-green-400 font-bold">
+            🎉 ครบทุกบูธแล้ว!
+          </div>
+        )}
+      </JoinEvent>
 
-              {/* ข้อมูลล่าง */}
-              <div className="absolute bottom-0 left-0 right-0 z-20 bg-black/50 px-3 py-2">
-                <p className="text-[#c9a96e] text-[0.65rem] tracking-[2px] font-serif uppercase">
-                  Exhibit No.{String(i+1).padStart(2,'0')}
+ {/* ── Modal ── */}
+ {selectedBooth && (
+        <div
+          className="fixed inset-0 z-90 flex items-center justify-center bg-black/70"
+          onClick={() => setSelectedBooth(null)} // ← กดพื้นหลังปิด
+        >
+          <div
+            className="bg-[#0f0c07] border border-[#c9a96e]/30 rounded-2xl p-6 w-[85%] max-w-sm mx-auto"
+            onClick={(e) => e.stopPropagation()} // ← กันปิดตอนกด modal
+          >
+            {/* Header */}
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <p className="text-[#c9a96e]/50 text-xs tracking-widest uppercase font-serif mb-1">
+                  สมาชิกบูธ
                 </p>
-                <p className="text-white text-sm font-bold font-serif truncate">{b.boothname}</p>
-                <p className="text-[#c9a96e]/50 text-xs font-serif italic">
-                  {done ? 'เยี่ยมชมแล้ว ✓' : 'ยังไม่ได้เยี่ยมชม'}
-                </p>
+                <h2 className="text-white font-serif text-xl font-bold">
+                  {selectedBooth.boothname}
+                </h2>
               </div>
-
-
+              <button
+                onClick={() => setSelectedBooth(null)}
+                className="text-white/40 hover:text-white text-xl leading-none"
+              >
+                ✕
+              </button>
             </div>
-          )
-        })}
+
+            {/* Members */}
+            <div className="flex flex-col gap-2">
+              {selectedBooth.members
+                ? selectedBooth.members.split("||").map((name, i) => {
+                    const ig = selectedBooth.instagrams?.split("||")[i];
+                    return (
+                      <div
+                        key={i}
+                        className="flex items-center gap-3 bg-white/5 rounded-xl px-4 py-3"
+                      >
+                        <span className="text-[#c9a96e] font-serif">{i + 1}.</span>
+                        <div className="flex flex-col">
+                          <span className="text-white text-sm">{name}</span>
+                          {ig && (
+                            <a
+                              href={`https://instagram.com/${ig.replace("@", "")}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[#c9a96e]/60 text-xs hover:text-[#c9a96e] transition-colors"
+                            >
+                              @{ig.replace("@", "")}
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                : <p className="text-white/40 text-sm text-center">ไม่มีข้อมูลสมาชิก</p>
+  }
+</div>
+
+          </div>
+        </div>
+      )}
+      <div className="flex justify-center mt-6 mb-8">
+        {(user || isAdmin) && (
+          <ScanQRCode
+            userId={user?.id ?? 0} // ← admin ไม่มี user_id ส่ง 0 ไป
+            onScanComplete={(data) => {
+              if (data.boothnum === "__ADMIN__") {
+                const allBoothnums = booths.map(b => String(b.boothnum));
+                setScanned(allBoothnums);
+                localStorage.setItem("scanned_booths", JSON.stringify(allBoothnums));
+                return;
+              }
+              setScanned((prev) => [...new Set([...prev, data.boothnum])]);
+            }}
+          />
+        )}
       </div>
-     
-      
-      {/*  ถ้าไม่มีข้อมูล */}
-      {booths.length === 0 && <p>ยังไม่มีข้อมูลบูธในขณะนี้</p>}
+      <RewardModal isOpen={showReward} onClose={() => setShowReward(false)} />
+
+    </div>
     </>
   );
 }
-
-/**position:relative;z-index:2;
-    max-width:430px;margin:0 auto;
-    padding:0 18px 150px; */
