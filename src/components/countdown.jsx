@@ -8,7 +8,6 @@ export default function Countdown(){
     const [currentDateText,setCurrentDateText]=useState("")
 
     const[isAdmin,setIsAdmin]=useState(false);
-
     //fetch api
     useEffect(()=>{
         //check key
@@ -147,6 +146,16 @@ export default function Countdown(){
             <p className="font-serif text-[0.8rem] text-[#c9a96e]/25 italic tracking-[1px] mt-4 shrink-0">
                 Coexist · COSCI
             </p>
+
+            {isEnded && (
+                <button
+                    onClick={() => router.push("/")}
+                    className="mt-4 px-6 py-3 rounded-xl font-serif text-sm text-[#0a0805] font-bold"
+                    style={{ background: "linear-gradient(135deg,#c9a96e,#8B6914,#c9a96e)" }}
+                >
+                    กลับหน้าหลัก
+                </button>
+                )}
         </div>
     )
 
