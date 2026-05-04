@@ -7,6 +7,7 @@ import Countingscan from "@/components/countingscan";
 import ScanQRCode from "@/components/scanqrcode";
 import RewardModal from "@/components/rewardmodal";
 import MuseumBackground from "@/components/museumbg";
+import RewardCard from "@/components/rewardcard";
 
 export default function Home() {
   const [booths, setBooths] = useState([]);
@@ -122,13 +123,22 @@ export default function Home() {
           <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
             {booths.map((b, i) => {
               const done = b.boothnum && scanned.map(String).includes(String(b.boothnum));
+              const num = String(i + 1).padStart(2, "0");
 
               return (
                 <div
                   key={b.id||i}
-                  className="rounded overflow-hidden relative aspect-3/4 transition duration-400 cursor-default"
+                  className={`relative rounded overflow-hidden aspect-3/4 transition-all duration-700 ${done ? "cursor-pointer" : "cursor-default"}`}
 
                   onClick={()=>done&&setSelectedBooth(b)}
+                  style={{
+                    border: done
+                      ? "1px solid rgba(201,169,110,0.4)"
+                      : "1px solid rgba(201,169,110,0.15)",
+                    boxShadow: done
+                      ? "0 0 20px rgba(201,169,110,0.15), inset 0 0 40px rgba(0,0,0,0.3)"
+                      : "inset 0 0 60px rgba(0,0,0,0.5)",
+                  }}
                 >
                   {/* image */}
                   {b.url ? (
@@ -136,43 +146,103 @@ export default function Home() {
                       src={b.url}
                       alt={b.boothname}
                       loading="lazy" 
-                      className={`absolute w-full h-full object-cover transition ${
-                        done
-                          ? "grayscale-0"
-                          : "grayscale blur-sm brightness-50"
+                      className={`absolute w-full h-full object-cover transition-all duration-700 ${
+                        done ? "grayscale-0 brightness-100" : "grayscale brightness-[0.15]"
                       }`}
                     />
                   ) : (
-                    <div className="bg-black w-full h-full" />
+                    <div className="absolute w-full h-full" style={{ background: "linear-gradient(135deg,#2a1f0e,#1a1208,#0d0a05)" }}/>
                   )}
 
-                  {/* lock */}
+                   {/* Overlay */}
+                  <div
+                    className="absolute inset-0 z-2 transition-all duration-700"
+                    style={{
+                      background: done
+                        ? "linear-gradient(180deg,rgba(0,0,0,0) 40%,rgba(0,0,0,0.75) 100%)"
+                        : "linear-gradient(180deg,rgba(201,169,110,0.08) 0%,rgba(10,8,5,0.6) 60%,rgba(10,8,5,0.85) 100%)",
+                    }}
+                  />
+                  {/* Lock (ยังไม่ได้ scan) */}
                   {!done && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/60">
-                      🔒
+                    <div className="absolute inset-0 z-[4] flex flex-col items-center justify-center gap-1.5">
+                      <div
+                        className="w-11 h-11 rounded-full flex items-center justify-center"
+                        style={{
+                          border: "1px solid rgba(201,169,110,0.12)",
+                          background: "rgba(0,0,0,0.5)",
+                          backdropFilter: "blur(4px)",
+                          color: "rgba(201,169,110,0.15)",
+                          fontSize: "1rem",
+                        }}
+                      >
+                        🔒
+                      </div>
+                      <span
+                        className="font-serif text-xs"
+                        style={{ color: "rgba(201,169,110,0.12)" }}
+                      >
+                        No.{num}
+                      </span>
                     </div>
                   )}
 
-                  {/* done */}
+                  {/* Spotlight (เฉพาะ done) */}
                   {done && (
-                    <div className="absolute top-2 right-2 text-green-400 text-xl">
-                      ✓
-                    </div>
+                    <div
+                      className="absolute z-3 pointer-events-none"
+                      style={{
+                        top: "-20%", left: "50%", transform: "translateX(-50%)",
+                        width: "80%", height: "60%",
+                        background: "radial-gradient(ellipse,rgba(201,169,110,0.08) 0%,transparent 70%)",
+                      }}
+                    />
                   )}
 
-                  {/* ← เพิ่ม hint ให้กดได้ */}
-                  {done && (
-                    <div className="absolute top-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
-                      👥 ดูสมาชิก
-                    </div>
-                  )}
+              {/* Done Badge */}
+              {done && (
+                          <>
+                            {/* เช็คมาร์ค */}
+                            <div className="absolute top-2 right-2 z-5 w-6 h-6 rounded-full flex items-center justify-center"
+                              style={{ background: "rgba(201,169,110,0.2)", border: "1px solid rgba(201,169,110,0.4)" }}>
+                              <span className="text-[#c9a96e] text-xs">✓</span>
+                            </div>
 
-                  {/* text */}
-                  <div className="absolute bottom-0 bg-black/60 w-full p-2 text-white">
-                    <p>{b.boothname}</p>
-                    <p className="text-xs">
-                      {done ? "เยี่ยมชมแล้ว" : "ยังไม่ได้เยี่ยมชม"}
-                    </p>
+                            {/* ดูสมาชิก */}
+                            <div className="absolute top-2 left-2 z-5 flex items-center gap-1 px-2 py-1 rounded text-xs"
+                              style={{ background: "rgba(0,0,0,0.5)", color: "rgba(201,169,110,0.8)" }}>
+                              👥 ดูสมาชิก
+                            </div>
+                          </>
+                        )}
+
+                  {/* Text Bottom */}
+                  <div className="absolute bottom-0 left-0 right-0 z-5 p-2.5">
+                    {done ? (
+                      <>
+                        <p className="text-xs font-serif tracking-widest uppercase mb-0.5"
+                          style={{ color: "rgba(201,169,110,0.5)" }}>
+                          EXHIBIT NO.{num}
+                        </p>
+                        <p className="text-white text-sm font-serif font-bold leading-tight">{b.boothname}</p>
+                        <p className="text-xs font-serif italic mt-0.5" style={{ color: "rgba(201,169,110,0.6)" }}>
+                          เยี่ยมชมแล้ว
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-xs font-serif tracking-widest uppercase mb-0.5"
+                          style={{ color: "rgba(201,169,110,0.12)" }}>
+                          EXHIBIT NO.{num}
+                        </p>
+                        <p className="text-sm font-serif leading-tight" style={{ color: "rgba(201,169,110,0.2)" }}>
+                          {b.boothname}
+                        </p>
+                        <p className="text-xs font-serif italic mt-0.5" style={{ color: "rgba(201,169,110,0.15)" }}>
+                          ยังไม่ได้เยี่ยมชม
+                        </p>
+                      </>
+                    )}
                   </div>
                 </div>
               );
@@ -249,6 +319,12 @@ export default function Home() {
           </div>
         </div>
       )}
+      
+          <RewardCard
+        scanned={scanned}
+        total={booths.length}
+        onOpen={() => setShowReward(true)}
+      />
       <div className="flex justify-center mt-6 mb-8">
         {(user || isAdmin) && (
           <ScanQRCode
@@ -265,8 +341,14 @@ export default function Home() {
           />
         )}
       </div>
-      <RewardModal isOpen={showReward} onClose={() => setShowReward(false)} />
 
+      <RewardModal
+        isOpen={showReward}
+        onClose={() => setShowReward(false)}
+        userId={user?.id ?? 1}  // ← admin ใช้ id = 1
+        scanned={scanned}
+        total={booths.length}
+      />
     </div>
     </>
   );
