@@ -11,12 +11,14 @@ export default function JoinEvent({ children, onJoinSuccess }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [user, setUser] = useState(null);
 
+  const [isChecking, setIsChecking] = useState(true);
+
   // ✅ โหลด user จาก localStorage
   useEffect(() => {
     const checkAdmin = localStorage.getItem("admin_logged_in") === "true";
     if (checkAdmin && window.location.pathname !== "/admin") {
       setIsAdmin(true);
-      router.push("/"); // 👉 แก้ path ตามจริง
+      setIsChecking(false);
       return;
     }
 
@@ -30,6 +32,7 @@ export default function JoinEvent({ children, onJoinSuccess }) {
         loginAt: new Date().toLocaleTimeString(),
       });
     }
+    setIsChecking(false);
   }, []);
 
   // ✅ logout
@@ -87,6 +90,7 @@ export default function JoinEvent({ children, onJoinSuccess }) {
 
   const initials = user?.name?.charAt(0)?.toUpperCase() || "?";
 
+  if (isChecking) return null;
   // ✅ admin → ข้าม
   if (isAdmin) return <>{children}</>;
 

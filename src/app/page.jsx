@@ -8,6 +8,7 @@ import ScanQRCode from "@/components/scanqrcode";
 import RewardModal from "@/components/rewardmodal";
 import MuseumBackground from "@/components/museumbg";
 import RewardCard from "@/components/rewardcard";
+import Countdown from "@/components/countdown";
 
 export default function Home() {
   const [booths, setBooths] = useState([]);
@@ -101,6 +102,7 @@ export default function Home() {
 
   return (
     <>
+    <Countdown/>
     <MuseumBackground/>
     <div className="flex flex-col min-h-screen">
       <JoinEvent
@@ -350,6 +352,7 @@ export default function Home() {
         total={booths.length}
       />
     </div>
+    
     </>
   );
 }
