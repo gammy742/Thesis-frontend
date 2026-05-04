@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect,useRef } from "react";
+import { useMemo } from 'react';
 import Cosciworklogo from "@/components/cosciworklogo";
 import JoinEvent from "@/components/joinevent";
 import Countingscan from "@/components/countingscan";
@@ -9,6 +10,7 @@ import RewardModal from "@/components/rewardmodal";
 import MuseumBackground from "@/components/museumbg";
 import RewardCard from "@/components/rewardcard";
 import Countdown from "@/components/countdown";
+import LoadingScreen from "@/components/loadingpage"
 
 export default function Home() {
   const [booths, setBooths] = useState([]);
@@ -20,7 +22,7 @@ export default function Home() {
   const [selectedBooth, setSelectedBooth] = useState(null);
   const [showReward, setShowReward] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-
+  const initialized = useRef(false);
   // โหลด user จาก localStorage
   useEffect(()=>{
     const savedUserId=localStorage.getItem("user_id");
@@ -28,11 +30,19 @@ export default function Home() {
     const adminLogged = localStorage.getItem("admin_logged_in") === "true";
 
     if(savedUserId) setUser({id:Number(savedUserId)});
-    setScanned(saved ?? []);
+
+    try{
+      setScanned(saved ? JSON.parse(saved):[]);
+    }catch{
+      setScanned([]);
+    }
+  
     setIsAdmin(adminLogged);
+    initialized.current = true;
   },[])
 
   useEffect(() => {
+    if (!initialized.current) return;
     localStorage.setItem("scanned_booths", JSON.stringify(scanned));
   }, [scanned]);
 
@@ -77,8 +87,6 @@ export default function Home() {
         if (data.scanned) {
           const local=JSON.parse(localStorage.getItem("scanned_booths"));
           const merge=[...new Set([...local,...dbScanned])]
-          setScanned(merge);
-          localStorage.setItem("scanned_booths", JSON.stringify(merge));
         }
       } catch (err) {
         console.error(err);
@@ -88,16 +96,23 @@ export default function Home() {
     fetchProgress();
   }, [user]);
 
-  const allDone = booths.length > 0 && booths.every(b =>
-    b.boothnum && (scanned ?? []).map(String).includes(String(b.boothnum))
+  const scannedSet = useMemo(() => new Set(scanned.map(String)), [scanned]);
+
+  const validBooths = useMemo(
+    () => booths.filter((b) => b.boothnum),
+    [booths]
   );
+
+  const allDone =
+    validBooths.length > 0 &&
+    validBooths.every((b) => scannedSet.has(String(b.boothnum)))
 
   useEffect(() => {
     if (allDone) setShowReward(true);
   }, [allDone]);
 
   if (isLoading) {
-    return <div className="text-center p-4">กำลังโหลด...</div>;
+    return <div className="text-center p-4">{<LoadingScreen/>}</div>;
   }
 
   return (
