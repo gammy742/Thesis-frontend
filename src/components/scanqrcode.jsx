@@ -270,7 +270,7 @@ export default function ScanQRCode({ userId, onScanComplete }) {
                   }}>
                     <span>👤 {msg.extra.username}</span>
                     <span>🏛️ {msg.extra.boothname} ({msg.extra.boothnum})</span>
-                    <span>📊 สแกนแล้ว {msg.extra.total_scanned}/10 ฐาน</span>
+                    <span>📊 สแกนแล้ว {msg.extra.total_scanned}/{msg.extra.total_booths} ฐาน</span>
                     <span>🎯 เหลืออีก {msg.extra.remaining} ฐาน</span>
                   </div>
                 )}
